@@ -27,11 +27,11 @@
 		<script>
 			$(window).smartresize(function () {
 				var w = $(window).innerWidth(), h = $(window).innerHeight();
-				vis.attr("width", w).attr("height", h);
-				force.size([w, h]).resume();
+				//vis.attr("width", w).attr("height", h);
+				//force.size([w, h]).resume();
 			});
 
-			var target = $('.renderer')[0];
+			var target = $('#renderer')[0];
 
 			$('button').click(function() {
 				if (screenfull.enabled) {
