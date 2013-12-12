@@ -1,4 +1,4 @@
-d3.json('/social/'+window.location.hash.replace('#', '')+'.json', initGraph);
+d3.json('http://lahdenvuo.info/social/'+window.location.hash.replace('#', '')+'.json', initGraph);
 
 function initGraph(data) {
 	var w = window.innerWidth, h = window.innerHeight;
