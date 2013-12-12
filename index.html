@@ -1,1 +1,49 @@
-Plöp
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>(anti)Social IRC</title>
+		<script src="http://d3js.org/d3.v3.min.js"></script>
+		<link rel="stylesheet" href="css/font-awesome.min.css">
+		<style type="text/css">
+			html, body {
+				margin: 0;
+				overflow: hidden;
+			}
+			button {
+				position: fixed;
+			}
+		</style>
+	</head>
+	<body>
+		<button><i class="icon-fullscreen"></i></button>
+		<script src="js/jquery-2.0.2.min.js"></script>
+
+		<script src="js/graph.js"></script>
+
+		<script src="js/smartresize.js"></script>
+		<script src="js/screenfull.min.js"></script>
+		
+		<script>
+			$(window).smartresize(function () {
+				var w = $(window).innerWidth(), h = $(window).innerHeight();
+				vis.attr("width", w).attr("height", h);
+				force.size([w, h]).resume();
+			});
+
+			var target = $('.renderer')[0];
+
+			$('button').click(function() {
+				if (screenfull.enabled) {
+					screenfull.toggle(target);
+				}
+				$(this).hide();
+			});
+			screenfull.onchange = function() {
+				if (!screenfull.isFullscreen) {
+					$('button').fadeIn(1000);
+				}
+			};
+		</script>
+	</body>
+</html>
