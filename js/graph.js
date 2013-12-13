@@ -1,5 +1,3 @@
-d3.json('http://lahdenvuo.info/social/'+window.location.hash.replace('#', '')+'.json', initGraph);
-
 function initViewPort() {
 
 	var svg = d3.select(document.body)
@@ -40,7 +38,7 @@ function initData(data) {
 	// Create links between nodes.
 	var links = Object.keys(data.edges).filter(function (key) {
 		var edge = data.edges[key];
-		return edge.weight > 0 &&
+		return edge.weight > 1 &&
 			nodeIndex[edge.source] !== undefined &&
 			nodeIndex[edge.target] !== undefined;
 	}).map(function (key, i) {
@@ -78,7 +76,7 @@ function initData(data) {
 }
 
 function initForces(svg, data, elements) {
-	var force = window.force = d3.layout.force().size([svg.attr("width"), svg.attr("height")])
+	var force1 = window.force = d3.layout.force().size([svg.attr("width"), svg.attr("height")])
 		.nodes(data.nodes)
 		.links(data.links)
 		.friction(0.5)
@@ -95,31 +93,40 @@ function initForces(svg, data, elements) {
 		.linkStrength(10)
 		.charge(-100);
 
+	var boxes = [];
+	// Don't cause sync layout because of read/write loop, precalc BBox.
+	elements.anchorNodes.select('text')
+		.each(function (d, i) { boxes[i] = this.getBBox(); });
+
+	force1.on("tick", updateLayout.bind(elements, boxes, force2));
+
 	force.start();
 	force2.start();
-
-	return [force, force2];
 }
 
 function initElements(svg, data) {
 	var c = svg.select('#container');
 
 	var links = c.selectAll("line.link")
-		.data(data.links).enter().append("svg:line")
+		.data(data.links).enter().append("line")
 		.attr("class", "link");
 
-	var nodes = c.selectAll("g.node")
+	var nodes = c.selectAll(".node")
 		.data(data.nodes).enter().append("g")
 		.attr("class", "node");
 
-	var anchorLinks = c.selectAll("line.anchorLink").data(data.labelAnchorLinks)
+	var anchorLinks = c.selectAll(".anchorLink")
+		.data(data.labelAnchorLinks)
 
-	var anchorNodes = c.selectAll("g.anchorNode")
+	var anchorNodes = c.selectAll(".anchorNode")
 		.data(data.labelAnchors).enter()
-		.append("svg:g")
-		.attr("class", "anchorNode")
-		.attr("pointer-events", "none");
+		.append("g")
+			.attr("class", "anchorNode")
+			.attr("pointer-events", "none");
 
+	anchorNodes
+		.filter(function (d, i) { return i % 2 !== 0; })
+		.append("text").text(function (d) { return d.node.label; });
 
 	// Add debug circles to labels.
 	/*anchorNodes.append("svg:circle")
@@ -183,9 +190,7 @@ function initStyles(elements) {
 		.style("stroke-width", 2);
 
 	// Add text with the name.
-	elements.anchorNodes
-		.filter(function (d, i) { return i % 2 !== 0; })
-		.append("svg:text").text(function (d, i) { return d.node.label; })
+	elements.anchorNodes.select('text')
 		.style("fill", "#555")
 		.style("font-family", "Arial")
 		.style("font-size", 16);
@@ -242,53 +247,45 @@ function initHover(elements) {
 
 function initGraph(json) {
 
-	var svg = initViewPort(),
-		data = initData(json),
-		nodes = data.nodes,
-		forces = initForces(svg, data),
-		force = forces[0], force2 = forces[1],
+	var svg    = initViewPort(),
+		data     = initData(json),
 		elements = initElements(svg, data);
-
+	
+	initForces(svg, data, elements);
 	initStyles(elements);
 	initHover(elements);
 	initDragging(elements);
 	initZooming(svg);
 
-	var boxes = [];
-	// Don't cause sync layout because of read/write loop, precalc BBox.
-	elements.anchorNodes
-		.filter(function (d, i) { return i % 2 !== 0; })
-		.each(function (d, i) { boxes[i * 2 + 1] = this.childNodes[0].getBBox(); });
+	return svg;
+}
 
-	force.on("tick", function force1Tick() {
+function updateLayout(labelBoxes, labelForce) {
+	labelForce.start();
 
-		force2.start();
+	this.nodes.call(updateNode);
 
-		elements.nodes.call(updateNode);
+	this.anchorNodes.each(function eachNode(d, i) {
+		if (i % 2 === 0) {
+			d.x = d.node.x;
+			d.y = d.node.y;
+		} else {
+			var diffX = d.x - d.node.x;
+			var diffY = d.y - d.node.y;
+			
+			var dist = Math.sqrt(diffX * diffX + diffY * diffY);
 
-		elements.anchorNodes.each(function eachNode(d, i) {
-			if (i % 2 === 0) {
-				d.x = d.node.x;
-				d.y = d.node.y;
-			} else {
-				var diffX = d.x - d.node.x;
-				var diffY = d.y - d.node.y;
-				
-				var dist = Math.sqrt(diffX * diffX + diffY * diffY);
+			var b = labelBoxes[i];
+			var shiftX = b.width * (diffX - dist) / (dist * 2);
+			var shiftY = b.height * (diffY + dist) / (dist * 2);
 
-				var b = boxes[i].width, f = 10;
-				var shiftX = b * (diffX - dist) / (dist * 2);
-				var shiftY = f * (diffY + dist) / (dist * 2);
-
-				this.childNodes[0].setAttribute("transform", "translate(" + shiftX + "," + shiftY + ")");
-			}
-		});
-		elements.anchorNodes.call(updateNode);
-
-		elements.links.call(updateLink);
-		elements.anchorLinks.call(updateLink);
-
+			this.childNodes[0].setAttribute("transform", "translate(" + shiftX + "," + shiftY + ")");
+		}
 	});
+	this.anchorNodes.call(updateNode);
+
+	this.links.call(updateLink);
+	this.anchorLinks.call(updateLink);
 }
 
 function updateNode() {

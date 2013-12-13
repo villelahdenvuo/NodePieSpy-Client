@@ -25,10 +25,19 @@
 		<script src="js/screenfull.min.js"></script>
 		
 		<script>
+
+			var api = 'http://lahdenvuo.info/social/',
+				channel = window.location.hash.replace('#', '') || 'kapsi',
+				graph;
+
+			d3.json(api + channel + '.json', function (data) {
+				graph = initGraph(data);
+			});
+			
 			$(window).smartresize(function () {
-				var w = $(window).innerWidth(), h = $(window).innerHeight();
-				//vis.attr("width", w).attr("height", h);
-				//force.size([w, h]).resume();
+				graph
+					.attr("width", window.innerWidth)
+					.attr("height", window.innerHeight);
 			});
 
 			var target = $('#renderer')[0];
@@ -37,7 +46,7 @@
 				if (screenfull.enabled) {
 					screenfull.toggle(target);
 				}
-				$(this).hide();
+				$(this).fadeOut(1000);
 			});
 			screenfull.onchange = function() {
 				if (!screenfull.isFullscreen) {
