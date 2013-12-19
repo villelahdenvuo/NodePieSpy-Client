@@ -215,6 +215,10 @@ function initHover(elements) {
 			// Make them opaque.
 			.transition().delay(100).duration(300)
 			.style("stroke-opacity", 1);
+
+		elements.nodes
+		  .filter(function (d) { return !(d.label in nicks); })
+		  .select('circle').style('fill', '#DDD');
 		
 		elements.anchorNodes
 			.attr('opacity', 0.1)
@@ -235,6 +239,7 @@ function initHover(elements) {
 			.duration(400)
 			.style("stroke-opacity", function (d) { return 0.1 + d.weight * 9; });
 
+		elements.nodes.select('circle').style('fill', '#555');
 		elements.anchorNodes.attr('opacity', 1);
 	}
 
