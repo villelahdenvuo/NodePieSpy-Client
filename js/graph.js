@@ -13,7 +13,7 @@ function initViewPort() {
 
 function initZooming(svg) {
 	var zoom = d3.behavior.zoom()
-    .scaleExtent([0.4, 10])
+    .scaleExtent([0.2, 10])
     .on("zoom", zoomed);
 
   function zoomed() {
@@ -28,20 +28,13 @@ function initData(data) {
 
 	var nodeIndex = {};
 
-	var nodes = Object.keys(data.nodes).filter(function (key) {
-		return data.nodes[key].weight > 5;
-	}).map(function (key, i) {
+	var nodes = Object.keys(data.nodes).map(function (key, i) {
 		nodeIndex[key] = i;
 		return data.nodes[key];
 	});
 
 	// Create links between nodes.
-	var links = Object.keys(data.edges).filter(function (key) {
-		var edge = data.edges[key];
-		return edge.weight > 1 &&
-			nodeIndex[edge.source] !== undefined &&
-			nodeIndex[edge.target] !== undefined;
-	}).map(function (key, i) {
+	var links = Object.keys(data.edges).map(function (key, i) {
 		var edge = data.edges[key];
 		return {
 			source: nodeIndex[edge.source],
@@ -79,11 +72,11 @@ function initForces(svg, data, elements) {
 	var force1 = window.force = d3.layout.force().size([svg.attr("width"), svg.attr("height")])
 		.nodes(data.nodes)
 		.links(data.links)
-		.friction(0.5)
-		.gravity(0.04)
+		.friction(0.8)
+		.gravity(0.03)
 		.linkDistance(50)
-		.charge(-700)
-		.linkStrength(function(d) { return d.weight; });
+		.charge(-1000)
+		.linkStrength(function(d) { return 0.1 + d.weight * 0.0005; });
 
 	var force2 = d3.layout.force()
 		.nodes(data.labelAnchors)
@@ -178,7 +171,7 @@ function initStyles(elements) {
 
 	// Style links
 	elements.links
-		.style("stroke-opacity", function (d) { return d.weight * 9; })
+		.style("stroke-opacity", function (d) { return 0.1 + d.weight * 9; })
 		.style("stroke", function (d, i) { return color(i); })
 		.style('stroke-width', function(d) { return 0.5 + Math.sqrt(d.weight * 20); });	
 
@@ -202,17 +195,32 @@ function initHover(elements) {
 		// Make the circle stroke red.
 		d3.select(this).select('circle').style('stroke', 'red');
 
+		var nicks = {};
+		nicks[el.label] = true;
+
 		elements.links
 			// Make all transparent.
 			.transition().duration(50)
-			.style("stroke-opacity", '0.1')
+			.style("stroke-opacity", 0.1)
 			// Filter out the non-hilighted.
 		  .filter(function (d) {
-				return d.source.label === el.label ||
-				       d.target.label === el.label; })
+		  		if (d.source.label === el.label ||
+				    d.target.label === el.label) {
+	  				
+	  				nicks[d.source.label] = true;
+	  				nicks[d.target.label] = true;
+		  			return true;
+		  		}
+				return false; })
 			// Make them opaque.
 			.transition().delay(100).duration(300)
-			.style("stroke-opacity", '1');
+			.style("stroke-opacity", 1);
+		
+		elements.anchorNodes
+			.attr('opacity', 0.1)
+			// Filter out the hilighted.
+		  .filter(function (d) { return d.node.label in nicks; })
+		  .attr('opacity', 1);
 	}
 
 	function resetHilt(el) {
@@ -225,7 +233,9 @@ function initHover(elements) {
 		elements.links
 			.transition()
 			.duration(400)
-			.style("stroke-opacity", function (d) { return d.weight * 9; });
+			.style("stroke-opacity", function (d) { return 0.1 + d.weight * 9; });
+
+		elements.anchorNodes.attr('opacity', 1);
 	}
 
 	elements.nodes
