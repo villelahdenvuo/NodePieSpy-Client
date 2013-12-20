@@ -13,7 +13,11 @@ GUI.prototype.loadChannels = function(cb) {
 
 	d3.json(self.api, function (channels) {
 		self.channels = channels;
-		self.channel = channels[0];
+
+		var chan = window.location.hash.substr(1);
+
+		self.channel = (channels.indexOf(chan) !== -1) ? chan : channels[0];
+
 		cb();
 	});
 };
@@ -22,6 +26,8 @@ GUI.prototype.initGUI = function() {
 	var self = this;
 
 	var gui = self.gui = new dat.GUI();
+
+	gui.close();
 
 	gui.add(self, 'fullscreen')
 		.name('Toggle Fullscreen');
@@ -39,6 +45,7 @@ GUI.prototype.loadGraph = function() {
 	}
 
 	d3.json(self.api + self.channel + '.json', function (data) {
+		window.location.hash = self.channel;
 		self.graph = initGraph(data);
 	});
 };
@@ -66,7 +73,7 @@ GUI.prototype.fullscreen = function() {
 
 GUI.prototype.init = function() {
 	var self = this;
-	
+
 	self.loadChannels(function () {
 		self.initGUI();
 		self.loadGraph();
