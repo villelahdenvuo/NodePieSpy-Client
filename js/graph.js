@@ -275,6 +275,10 @@ function initGraph(json) {
 	return svg;
 }
 
+function deleteGraph() {
+	d3.select('svg').remove();
+}
+
 function updateLayout(labelBoxes, labelForce) {
 	labelForce.start();
 
