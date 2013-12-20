@@ -33,7 +33,7 @@ GUI.prototype.initGUI = function() {
 		.name('Toggle Fullscreen');
 
 	gui.add(self, 'channel', self.channels)
-		.name('Channel')
+		.name('Select Channel')
 		.onFinishChange(self.loadGraph.bind(self));
 };
 
