@@ -24,8 +24,7 @@ function initZooming(svg) {
 	svg.call(zoom);
 }
 
-function initData(data) {
-
+function initGraphData(data) {
 	var nodeIndex = {};
 
 	var nodes = Object.keys(data.nodes).map(function (key, i) {
@@ -66,6 +65,40 @@ function initData(data) {
 		labelAnchors: labelAnchors,
 		labelAnchorLinks: labelAnchorLinks
 	};
+}
+
+function initTreeData(nodes) {
+
+	var labels = Object.keys(nodes), root;
+
+	var root;
+
+	labels.forEach(function (node) {
+		if (nodes[node] === null) { root = node; }
+		nodes[node] = {
+			nick: node,
+			parent: nodes[node],
+			children: []
+		};
+	});
+
+	labels.forEach(function (node) {
+		var label = nodes[node].parent;
+		if (label) {
+			nodes[label].children.push(node);
+		}
+	});
+
+	function buildTree(current) {
+		current.children.forEach(function (child, i) {
+			current.children[i] = nodes[child];
+			buildTree(nodes[child]);
+		});
+	}
+
+	buildTree(nodes[root]);
+
+	return nodes[root];
 }
 
 function initForces(svg, data, elements) {
@@ -173,7 +206,7 @@ function initStyles(elements) {
 	elements.links
 		.style("stroke-opacity", function (d) { return 0.1 + d.weight * 9; })
 		.style("stroke", function (d, i) { return color(i); })
-		.style('stroke-width', function(d) { return 0.5 + Math.sqrt(d.weight * 20); });	
+		.style('stroke-width', function(d) { return 0.5 + Math.sqrt(d.weight * 20); });
 
 	// Add a circle to nodes.
 	elements.nodes.append("circle")
@@ -206,7 +239,7 @@ function initHover(elements) {
 		  .filter(function (d) {
 		  		if (d.source.label === el.label ||
 				    d.target.label === el.label) {
-	  				
+
 	  				nicks[d.source.label] = true;
 	  				nicks[d.target.label] = true;
 		  			return true;
@@ -219,7 +252,7 @@ function initHover(elements) {
 		elements.nodes
 		  .filter(function (d) { return !(d.label in nicks); })
 		  .select('circle').style('fill', '#DDD');
-		
+
 		elements.anchorNodes
 			.attr('opacity', 0.1)
 			// Filter out the hilighted.
@@ -261,18 +294,66 @@ function initHover(elements) {
 }
 
 function initGraph(json) {
-
-	var svg    = initViewPort(),
-		data     = initData(json),
+	var svg      = initViewPort(),
+		data     = initGraphData(json),
 		elements = initElements(svg, data);
-	
+
 	initForces(svg, data, elements);
 	initStyles(elements);
 	initHover(elements);
 	initDragging(elements);
 	initZooming(svg);
 
-	return svg;
+	return {
+		'svg': svg,
+		'data': data,
+		'elements': elements
+	};
+}
+
+function initTree(json) {
+	var svg  = initViewPort(),
+		root = initTreeData(json);
+
+	initZooming(svg);
+
+	var tree = d3.layout.tree()
+	    .size([svg.attr('height'), svg.attr('width') - 200]);
+
+	var diagonal = d3.svg.diagonal()
+	    .projection(function(d) { return [d.y, d.x]; });
+
+	 svg = svg.select('#container').append("g")
+		.attr("transform", "translate(100,0)");
+
+  var nodes = tree.nodes(root),
+      links = tree.links(nodes);
+
+  var link = svg.selectAll("path.link")
+      .data(links)
+    .enter().append("path")
+      .attr("class", "link")
+      .attr("d", diagonal);
+
+  var node = svg.selectAll("g.node")
+      .data(nodes)
+    .enter().append("g")
+      .attr("class", "node")
+      .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
+
+  node.append("circle")
+      .attr("r", 4.5);
+
+  node.append("text")
+      .attr("dx", function(d) { return d.children ? -8 : 8; })
+      .attr("dy", 3)
+      .attr("text-anchor", function(d) { return d.children ? "end" : "start"; })
+      .text(function(d) { return d.nick; });
+
+	return {
+		'svg': svg,
+		'data': root
+	};
 }
 
 function deleteGraph() {
@@ -291,7 +372,7 @@ function updateLayout(labelBoxes, labelForce) {
 		} else {
 			var diffX = d.x - d.node.x;
 			var diffY = d.y - d.node.y;
-			
+
 			var dist = Math.sqrt(diffX * diffX + diffY * diffY);
 
 			var b = labelBoxes[i];
