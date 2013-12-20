@@ -1,7 +1,7 @@
 function initViewPort() {
 
 	var svg = d3.select(document.body)
-		.append("svg:svg")
+		.append("svg")
 		.attr("width", window.innerWidth)
 		.attr("height", window.innerHeight)
 		.attr('id', 'renderer');

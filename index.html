@@ -4,6 +4,7 @@
 		<meta charset="utf-8">
 		<title>(anti) social IRC</title>
 		<script src="http://d3js.org/d3.v3.min.js"></script>
+		<script src="js/dat.gui.min.js"></script>
 		<link rel="stylesheet" href="css/font-awesome.min.css">
 		<style type="text/css">
 			* {
@@ -21,18 +22,13 @@
 		</style>
 	</head>
 	<body>
+		<script src="js/gui.js"></script>
 		<script src="js/graph.js"></script>
 
 		<script>
+			var gui = new GUI();
 
-			var api = 'http://lahdenvuo.info/social/',
-				channel = window.location.hash.replace('#', '') || 'kapsi',
-				graph;
-
-			d3.json(api + channel + '.json', function (data) {
-				graph = initGraph(data);
-			});
-			
+			gui.init();
 		</script>
 	</body>
 </html>
