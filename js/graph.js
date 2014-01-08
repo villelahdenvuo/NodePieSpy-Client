@@ -67,6 +67,52 @@ function initGraphData(data) {
 	};
 }
 
+function initClusterData(data) {
+	var nodeIndex = {};
+
+	var nodes = Object.keys(data.nodes).map(function (key, i) {
+		nodeIndex[key] = i;
+		return data.nodes[key];
+	});
+
+	// Create links between nodes.
+	var links = Object.keys(data.edges).filter(function (key) {
+		var edge = data.edges[key];
+		return data.nodes[edge.source].group === data.nodes[edge.target].group;
+	}).map(function (key, i) {
+		var edge = data.edges[key];
+		return {
+			source: nodeIndex[edge.source],
+			target: nodeIndex[edge.target],
+			weight: edge.weight / 100
+		};
+	});
+
+	var labelAnchors = [];
+	var labelAnchorLinks = [];
+
+	// Create labels
+	nodes.forEach(function (node) {
+		labelAnchors.push({node: node}, {node: node});
+	});
+
+	// Create links for the labels.
+	for (var i = 0; i < nodes.length; i++) {
+		labelAnchorLinks.push({
+			source : i * 2,
+			target : i * 2 + 1,
+			weight : nodes[i].weight
+		});
+	};
+
+	return {
+		nodes: nodes,
+		links: links,
+		labelAnchors: labelAnchors,
+		labelAnchorLinks: labelAnchorLinks
+	};
+}
+
 function initTreeData(nodes) {
 
 	var labels = Object.keys(nodes), root;
@@ -222,6 +268,48 @@ function initStyles(elements) {
 		.style("font-size", 16);
 }
 
+function initClusterStyles(elements) {
+	var color = d3.scale.category10();
+
+	// Style links
+	elements.links
+		.style("stroke-opacity", function (d) { 
+			if (d.source.group === d.target.group) {
+				return 1;
+			} else {
+				//console.log('asd', d);
+				return 0.1;
+			}
+		})
+		.style("stroke", function (d, i) {
+			if (d.source.group === d.target.group) {
+				return color(d.source.group);
+			} else {
+				return '#000';
+			}
+		})
+		.style('stroke-width', function(d) { 
+			if (d.source.group === d.target.group) {
+				return 0.5 + Math.sqrt(d.weight * 20) * 2;
+			} else {
+				return 0.5 + Math.sqrt(d.weight * 20) * 0.5;
+			}
+		});
+
+	// Add a circle to nodes.
+	elements.nodes.append("circle")
+		.attr("r", function (d) { return 3 + Math.sqrt(d.weight * 4); })
+		.style("fill", "#555")
+		.style("stroke", "#FFF")
+		.style("stroke-width", 2);
+
+	// Add text with the name.
+	elements.anchorNodes.select('text')
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 16);
+}
+
 function initHover(elements) {
 
 	function addHilt(el) {
@@ -301,6 +389,24 @@ function initGraph(json) {
 	initForces(svg, data, elements);
 	initStyles(elements);
 	initHover(elements);
+	initDragging(elements);
+	initZooming(svg);
+
+	return {
+		'svg': svg,
+		'data': data,
+		'elements': elements
+	};
+}
+
+function initClusters(json) {
+	var svg      = initViewPort(),
+		data     = initClusterData(json),
+		elements = initElements(svg, data);
+
+	initForces(svg, data, elements);
+	initClusterStyles(elements);
+	//initHover(elements);
 	initDragging(elements);
 	initZooming(svg);
 

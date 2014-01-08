@@ -7,12 +7,13 @@ function GUI() {
 	this.channel = null;
 	this.graph = null;
 	this.current = '';
+	this.inflation = 2;
 }
 
 GUI.prototype.loadChannels = function(cb) {
 	var self = this;
 
-	d3.json(self.api + 'channel', function (channels) {
+	d3.json(self.api + 'graph', function (channels) {
 		self.channels = channels;
 
 		var chan = window.location.hash.substr(1);
@@ -42,6 +43,11 @@ GUI.prototype.initGUI = function() {
 
 	self.bfsButt = algos.add(self, 'bfs')
 		.name('BFS');
+
+	algos.add(self, 'inflation', 1, 5).step(0.1)
+		.name('Inflation');
+	self.clusterButt = algos.add(self, 'cluster')
+		.name('Markov Clusters');
 };
 
 GUI.prototype.bfs = function () {
@@ -68,14 +74,36 @@ GUI.prototype.bfs = function () {
 	});
 };
 
+GUI.prototype.cluster = function () {
+	var self = this;
+
+	if (self.current === 'cluster') {
+		self.clusterButt.name('Markov Clusters');
+		self.loadGraph();
+		return;
+	}
+
+	self.current = 'cluster';
+	deleteGraph();
+	self.clusterButt.name('Loading Clusters...');
+
+	d3.json(self.api + 'clusters/' + self.channel + '/' + self.inflation + '.json', function (data) {
+		self.clusterButt.name('Close Clusters');
+		self.graph = initClusters(data);
+	});
+};
+
 GUI.prototype.loadGraph = function () {
 	var self = this
+
+	self.clusterButt.name('Markov Clusters');
+	self.bfsButt.name('BFS');
 
 	if (this.graph) {
 		deleteGraph();
 	}
 
-	d3.json(self.api + 'channel/' + self.channel + '.json', function (data) {
+	d3.json(self.api + 'graph/' + self.channel + '.json', function (data) {
 		window.location.hash = self.channel;
 		self.graph = initGraph(data);
 		self.current = 'graph';
