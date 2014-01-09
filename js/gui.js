@@ -45,10 +45,13 @@ GUI.prototype.initGUI = function() {
 	self.bfsButt = algos.add(self, 'bfs')
 		.name('BFS');
 
-	algos.add(self, 'inflation', 2, 40).step(1)
-		.name('Inflation');
 	self.clusterButt = algos.add(self, 'cluster')
 		.name('Markov Clusters');
+	algos.add(self, 'inflation', 2, 50).step(1)
+		.name('Inflation').onFinishChange(function () {
+			self.current = '';
+			self.cluster();
+		});
 };
 
 GUI.prototype.bfs = function () {
@@ -143,7 +146,7 @@ GUI.prototype.init = function () {
 	self.loadChannels(function () {
 		self.initGUI();
 
-		
+
 
 		self.loadGraph();
 	});
