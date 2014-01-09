@@ -63,6 +63,7 @@ GUI.prototype.bfs = function () {
 		return;
 	}
 
+	self.clusterButt.name('Markov Clusters');
 	self.bfsButt.name('Select start node');
 
 	self.graph.elements.nodes.on('click.bfs', function (node) {
@@ -88,6 +89,7 @@ GUI.prototype.cluster = function () {
 	}
 
 	self.current = 'cluster';
+	self.bfsButt.name('BFS');
 	self.clusterButt.name('Loading Clusters...');
 
 	self.currentReq = d3.json(self.api + 'clusters/' + self.channel + '/' + self.inflation + '.json', function (data) {
