@@ -184,7 +184,7 @@ function initClusterForces(svg, data, elements) {
 		.friction(0.8)
 		.gravity(0.03)
 		.linkDistance(50)
-		.charge(-1000)
+		.charge(-200)
 		.linkStrength(function(d) {
 			return d.group ? 0.1 + d.weight * 0.0005 : 0.005;
 		});
@@ -301,20 +301,19 @@ function initStyles(elements) {
 }
 
 function initClusterStyles(elements) {
-	var color = d3.scale.category10();
+	var color = d3.scale.category20();
 
 	// Style links
 	elements.links
 		.style("stroke-opacity", function (d) {
-			return d.group ? 1 : 0.4;
+			return d.group ? 1 : 0.3;
 		})
 		.style("stroke", function (d, i) {
-			//console.log(d.group, d3.interpolateRgb(color(d.source.group), color(d.target.group))(0.5));
 			return d.group ? color(d.source.group) :
 				d3.interpolateRgb(color(d.source.group), color(d.target.group))(0.5);
 		})
 		.style('stroke-width', function(d) { 
-			return 0.5 + Math.sqrt(d.weight * 20) * (d.group ? 2 : 0.5);
+			return 0.5 + Math.sqrt(d.weight * 20) * (d.group ? 4 : 1);
 		});
 
 	// Add a circle to nodes.
@@ -427,7 +426,6 @@ function initClusters(json) {
 
 	initClusterForces(svg, data, elements);
 	initClusterStyles(elements);
-	//initHover(elements);
 	initDragging(elements);
 	initZooming(svg);
 
