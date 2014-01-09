@@ -68,7 +68,7 @@ GUI.prototype.bfs = function () {
 		self.graph = undefined;
 		self.current = 'bfs';
 
-		d3.json(self.api + 'bfs/' + self.channel + '/' + node.label + '.json', function (data) {
+		d3.json(self.api + 'bfs/' + self.channel + '/' + escape(node.label) + '.json', function (data) {
 			self.graph = initTree(data);
 		});
 	});

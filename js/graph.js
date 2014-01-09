@@ -78,12 +78,13 @@ function initClusterData(data) {
 	// Create links between nodes.
 	var links = Object.keys(data.edges).filter(function (key) {
 		var edge = data.edges[key];
-		return data.nodes[edge.source].group === data.nodes[edge.target].group;
+		return true; //data.nodes[edge.source].group === data.nodes[edge.target].group;
 	}).map(function (key, i) {
 		var edge = data.edges[key];
 		return {
 			source: nodeIndex[edge.source],
 			target: nodeIndex[edge.target],
+			group: data.nodes[edge.source].group === data.nodes[edge.target].group,
 			weight: edge.weight / 100
 		};
 	});
@@ -156,6 +157,37 @@ function initForces(svg, data, elements) {
 		.linkDistance(50)
 		.charge(-1000)
 		.linkStrength(function(d) { return 0.1 + d.weight * 0.0005; });
+
+	var force2 = d3.layout.force()
+		.nodes(data.labelAnchors)
+		.links(data.labelAnchorLinks)
+		.gravity(0)
+		.linkDistance(function (d) { return Math.sqrt(d.weight) * 1.5; })
+		.linkStrength(10)
+		.charge(-100);
+
+	var boxes = [];
+	// Don't cause sync layout because of read/write loop, precalc BBox.
+	elements.anchorNodes.select('text')
+		.each(function (d, i) { boxes[i] = this.getBBox(); });
+
+	force1.on("tick", updateLayout.bind(elements, boxes, force2));
+
+	force.start();
+	force2.start();
+}
+
+function initClusterForces(svg, data, elements) {
+	var force1 = window.force = d3.layout.force().size([svg.attr("width"), svg.attr("height")])
+		.nodes(data.nodes)
+		.links(data.links)
+		.friction(0.8)
+		.gravity(0.03)
+		.linkDistance(50)
+		.charge(-1000)
+		.linkStrength(function(d) {
+			return d.group ? 0.1 + d.weight * 0.0005 : 0.005;
+		});
 
 	var force2 = d3.layout.force()
 		.nodes(data.labelAnchors)
@@ -273,27 +305,16 @@ function initClusterStyles(elements) {
 
 	// Style links
 	elements.links
-		.style("stroke-opacity", function (d) { 
-			if (d.source.group === d.target.group) {
-				return 1;
-			} else {
-				//console.log('asd', d);
-				return 0.1;
-			}
+		.style("stroke-opacity", function (d) {
+			return d.group ? 1 : 0.5;
 		})
 		.style("stroke", function (d, i) {
-			if (d.source.group === d.target.group) {
-				return color(d.source.group);
-			} else {
-				return '#000';
-			}
+			//console.log(d.group, d3.interpolateRgb(color(d.source.group), color(d.target.group))(0.5));
+			return d.group ? color(d.source.group) :
+				d3.interpolateRgb(color(d.source.group), color(d.target.group))(0.5);
 		})
 		.style('stroke-width', function(d) { 
-			if (d.source.group === d.target.group) {
-				return 0.5 + Math.sqrt(d.weight * 20) * 2;
-			} else {
-				return 0.5 + Math.sqrt(d.weight * 20) * 0.5;
-			}
+			return 0.5 + Math.sqrt(d.weight * 20) * (d.group ? 2 : 0.5);
 		});
 
 	// Add a circle to nodes.
@@ -404,7 +425,7 @@ function initClusters(json) {
 		data     = initClusterData(json),
 		elements = initElements(svg, data);
 
-	initForces(svg, data, elements);
+	initClusterForces(svg, data, elements);
 	initClusterStyles(elements);
 	//initHover(elements);
 	initDragging(elements);
