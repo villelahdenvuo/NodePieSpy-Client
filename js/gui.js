@@ -84,10 +84,10 @@ GUI.prototype.cluster = function () {
 	}
 
 	self.current = 'cluster';
-	deleteGraph();
 	self.clusterButt.name('Loading Clusters...');
 
 	d3.json(self.api + 'clusters/' + self.channel + '/' + self.inflation + '.json', function (data) {
+		deleteGraph();
 		self.clusterButt.name('Close Clusters');
 		self.graph = initClusters(data);
 	});
