@@ -306,7 +306,7 @@ function initClusterStyles(elements) {
 	// Style links
 	elements.links
 		.style("stroke-opacity", function (d) {
-			return d.group ? 1 : 0.5;
+			return d.group ? 1 : 0.4;
 		})
 		.style("stroke", function (d, i) {
 			//console.log(d.group, d3.interpolateRgb(color(d.source.group), color(d.target.group))(0.5));
