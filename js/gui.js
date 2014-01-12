@@ -1,13 +1,13 @@
 
-function GUI() {
-	this.api = 'http://lahdenvuo.info/social/';
+function GUI(api) {
+	this.api = api;
 
 	// Will be loaded later.
 	this.channels = null;
 	this.channel = null;
 	this.graph = null;
 	this.current = '';
-	this.inflation = 8;
+	this.inflation = 10;
 	this.currentReq = null;
 }
 
@@ -47,7 +47,7 @@ GUI.prototype.initGUI = function() {
 
 	self.clusterButt = algos.add(self, 'cluster')
 		.name('Markov Clusters');
-	algos.add(self, 'inflation', 2, 50).step(1)
+	algos.add(self, 'inflation', 2, 50).step(2)
 		.name('Inflation').onFinishChange(function () {
 			self.current = '';
 			self.cluster();

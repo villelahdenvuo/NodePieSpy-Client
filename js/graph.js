@@ -309,7 +309,7 @@ function initClusterStyles(elements) {
 	// Style links
 	elements.links
 		.style("stroke-opacity", function (d) {
-			return d.group ? 1 : 0.3;
+			return d.group ? 1 : 0.2;
 		})
 		.style("stroke", function (d, i) {
 			return d.group ? color(d.source.group) :
