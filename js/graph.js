@@ -336,7 +336,6 @@ function initClusterStyles(elements) {
 function initHover(elements) {
 
 	function addHilt(el) {
-		// Make the circle stroke red.
 		d3.select(this).select('circle').style('stroke', 'red');
 
 		var nicks = {};
@@ -364,15 +363,16 @@ function initHover(elements) {
 		  .filter(function (d) { return !(d.label in nicks); })
 		  .select('circle').style('fill', '#DDD');
 
-		elements.anchorNodes
+		elements.anchorNodes.select('text')
 			.attr('opacity', 0.1)
 			// Filter out the hilighted.
 		  .filter(function (d) { return d.node.label in nicks; })
-		  .attr('opacity', 1);
+		  .attr('opacity', 1)
+		  .filter(function (d) { console.log(d.node.label === el.label); return d.node.label === el.label; })
+		  .style('font-weight', 'bold');
 	}
 
 	function resetHilt(el) {
-		// Reset circle stroke to white.
 		d3.select(this).select('circle')
 			.transition()
 			.duration(400)
@@ -384,7 +384,43 @@ function initHover(elements) {
 			.style("stroke-opacity", function (d) { return 0.1 + d.weight * 9; });
 
 		elements.nodes.select('circle').style('fill', '#555');
-		elements.anchorNodes.attr('opacity', 1);
+		elements.anchorNodes.select('text').attr('opacity', 1).style('font-weight', 'normal');
+	}
+
+	elements.nodes
+		.on('mouseover.hilight', addHilt)
+		.on('mouseout.hilight', resetHilt)
+		// Reset hiliting handlers when dragging.
+		// Otherwise mouseout will break hilighting when moving nodes around.
+		.on('mousedown.hilight', function () {
+			elements.nodes
+				.on('mouseover.hilight', null)
+				.on('mouseout.hilight', null);
+		})
+		.on('mouseup.hilight', function () {
+			elements.nodes
+				.on('mouseover.hilight', addHilt)
+				.on('mouseout.hilight', resetHilt);
+		});
+}
+
+function initClusterHover(elements) {
+
+	function addHilt(el) {
+		d3.select(this).select('circle').style('stroke', 'red');
+
+		elements.anchorNodes.select('text')
+		  .filter(function (d) { console.log(d.node.label === el.label); return d.node.label === el.label; })
+		  .style('font-weight', 'bold');
+	}
+
+	function resetHilt(el) {
+		d3.select(this).select('circle')
+			.transition()
+			.duration(400)
+			.style('stroke', '#FFF');
+
+		elements.anchorNodes.select('text').style('font-weight', 'normal');
 	}
 
 	elements.nodes
@@ -429,6 +465,7 @@ function initClusters(json) {
 
 	initClusterForces(svg, data, elements);
 	initClusterStyles(elements);
+	initClusterHover(elements);
 	initDragging(elements);
 	initZooming(svg);
 
