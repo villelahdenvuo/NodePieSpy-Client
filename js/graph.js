@@ -213,7 +213,10 @@ function initElements(svg, data) {
 
 	var links = c.selectAll("line.link")
 		.data(data.links).enter().append("line")
-		.attr("class", "link");
+		.attr("class", "link")
+		.sort(function (d) {
+			return d.group ? 1 : -1;
+		});
 
 	var nodes = c.selectAll(".node")
 		.data(data.nodes).enter().append("g")
